@@ -97,77 +97,6 @@ spec:
 
 ---
 
-## 📋 ArgoCD Application 配置详解
-
-### microservice1-dev.yaml 逐行解析
-
-**📝 微服务1 DEV环境的ArgoCD应用定义，展示了标准的GitOps部署模式**
-
-```yaml
-apiVersion: argoproj.io/v1alpha1
-# 固定写法: ArgoCD Application的API版本
-
-kind: Application
-# 固定写法: ArgoCD Application资源类型
-
-metadata:
-  name: microservice1-dev
-  # 🌟 应用标识: 应用名称包含服务名和环境信息
-  # 💡 命名约定: {服务名}-{环境} 格式便于管理
-  
-  namespace: argocd
-  # 固定写法: 所有ArgoCD Application都在argocd命名空间
-
-spec:
-  project: default
-  # 🔧 项目归属: 使用默认项目，生产环境可创建专门项目
-  
-  source:
-    repoURL: https://github.com/1979447992/project-gitops-config.git
-    # 🌟 配置源: GitOps配置仓库地址
-    # ⚠️ 依赖: 需要确保ArgoCD有访问此仓库的权限
-    
-    targetRevision: main
-    # 🌟 版本控制: 使用main分支的最新配置
-    # 💡 生产建议: 使用特定标签或release分支
-    
-    path: charts/microservice1
-    # 🌟 Chart路径: 指向microservice1的Helm Chart目录
-    # 💡 模板复用: 同一个Chart可用于不同环境
-    
-    helm:
-      valueFiles:
-        - ../../environments/dev/microservice1-values.yaml
-        # 🌟 环境配置: 指定DEV环境的值文件
-        # 💡 路径解释: 相对于charts/microservice1的路径
-        # 🔧 配置分离: 模板与环境配置分离，便于管理
-        
-  destination:
-    server: https://kubernetes.default.svc
-    # 固定写法: 目标Kubernetes集群地址
-    
-    namespace: microservice1-dev
-    # 🌟 目标命名空间: 微服务1的DEV环境命名空间
-    # 💡 隔离策略: 每个服务每个环境使用独立命名空间
-    
-  syncPolicy:
-    automated:
-      prune: true
-      # 🌟 资源清理: 自动删除不再定义的资源
-      # 💡 一致性保证: 确保集群状态与Git完全一致
-      
-      selfHeal: true
-      # 🌟 自动修复: 检测并修复配置漂移
-      # 💡 运维自动化: 减少手动干预需求
-      
-    syncOptions:
-      - CreateNamespace=true
-      # 🌟 命名空间管理: 自动创建microservice1-dev命名空间
-      # 💡 部署简化: 无需预先手动创建命名空间
-```
-
----
-
 ## 📦 Helm Chart 模板详解
 
 ### microservice1/Chart.yaml 解析
@@ -278,50 +207,6 @@ spec:
           # 🔧 安全处理: quote函数确保值被正确引用
 ```
 
-### microservice1/templates/service.yaml 详解
-
-**📝 Kubernetes Service 模板，定义了微服务的网络访问**
-
-```yaml
-apiVersion: v1
-# 固定写法: Kubernetes Service的API版本
-
-kind: Service
-# 固定写法: Kubernetes Service资源类型
-
-metadata:
-  name: {{ .Chart.Name }}
-  # 🌟 服务名称: 使用Chart名称，确保服务发现的一致性
-
-  labels:
-    app: {{ .Chart.Name }}
-    # 🌟 服务标签: 便于管理和选择
-
-spec:
-  type: {{ .Values.service.type }}
-  # 🌟 服务类型: ClusterIP/NodePort/LoadBalancer
-  # 💡 环境配置: 不同环境可使用不同的服务类型
-
-  ports:
-    - port: {{ .Values.service.port }}
-      # 🌟 服务端口: Service对外暴露的端口
-
-      targetPort: {{ .Values.service.port }}
-      # 🌟 目标端口: 转发到Pod的端口
-      # 💡 端口映射: 通常与service.port相同
-
-      protocol: TCP
-      # 固定写法: HTTP服务使用TCP协议
-
-      name: http
-      # 🌟 端口名称: 为端口命名，便于ServiceMonitor引用
-
-  selector:
-    app: {{ .Chart.Name }}
-    # 🌟 Pod选择器: 选择具有此标签的Pod作为后端
-    # 💡 服务发现: 与Deployment的Pod标签匹配
-```
-
 ### microservice1/templates/servicemonitor.yaml 详解
 
 **📝 Prometheus ServiceMonitor 模板，定义了监控数据收集配置**
@@ -385,406 +270,247 @@ spec:
 
 ---
 
-## ⚙️ Helm Values 配置详解
+## 📊 监控栈配置深度解析
 
-### charts/microservice1/values.yaml (默认值)
+### charts/kube-prometheus-stack/values.yaml (当前配置)
 
-**📝 Helm Chart 的默认配置，定义了所有可配置参数的默认值**
-
-```yaml
-replicaCount: 1
-# 🌟 副本数量: 默认部署1个Pod副本
-# 💡 扩展性: 生产环境通常设置为2+以确保高可用
-
-image:
-  repository: ghcr.io/1979447992/microservice1
-  # 🌟 镜像仓库: 默认的镜像仓库地址
-  # 🔧 可覆盖: 环境特定values文件可覆盖此值
-
-  pullPolicy: Always
-  # 🌟 拉取策略: 总是拉取最新镜像
-  # 💡 开发友好: 确保始终使用最新构建的镜像
-
-  tag: "latest"
-  # 🌟 镜像标签: 默认使用latest标签
-  # ⚠️ 生产不建议: 生产环境应使用具体版本标签
-
-service:
-  type: ClusterIP
-  # 🌟 服务类型: 默认使用集群内部访问
-  # 💡 类型选择: ClusterIP(内部)/NodePort(外部)/LoadBalancer(云)
-
-  port: 8080
-  # 🌟 服务端口: 与Spring Boot应用端口保持一致
-  # 固定写法: Spring Boot默认端口
-
-resources:
-  limits:
-    cpu: 200m
-    memory: 128Mi
-    # 🌟 资源上限: CPU和内存的最大使用量
-    # 💡 防护机制: 防止单个Pod耗尽节点资源
-
-  requests:
-    cpu: 100m
-    memory: 64Mi
-    # 🌟 资源请求: 保证的最小资源分配
-    # 💡 调度保证: Kubernetes调度器据此分配Pod
-
-ingress:
-  enabled: false
-  # 🌟 Ingress配置: 默认禁用外部访问
-  # 💡 安全考虑: 仅在需要时启用外部访问
-
-env: []
-# 🌟 环境变量: 默认为空数组
-# 💡 扩展点: 环境特定配置可添加环境变量
-```
-
-### environments/dev/microservice1-values.yaml (环境特定配置)
-
-**📝 DEV环境的特定配置，覆盖默认值以适应开发环境需求**
+**📝 监控栈的默认配置，已修复StorageClass问题**
 
 ```yaml
-image:
-  repository: ghcr.io/1979447992/microservice1/microservice1
-  # 🌟 环境镜像: DEV环境使用特定的镜像仓库路径
-  # 💡 路径差异: 与默认值不同，包含额外的路径层级
+kube-prometheus-stack:
+  # 🌟 Prometheus配置
+  prometheus:
+    prometheusSpec:
+      retention: 7d
+      # 🔧 数据保留: 默认保留7天数据
+      
+      retentionSize: "2GB"
+      # 🔧 存储大小: 数据达到2GB时开始清理
+      
+      resources:
+        limits:
+          cpu: 500m
+          memory: 1Gi
+        requests:
+          cpu: 200m
+          memory: 512Mi
+      # 🌟 资源配置: CPU和内存的基础配置
+      
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: "local-path"
+            # 🌟 存储类: 已修复，统一使用local-path
+            # ⚠️ 重要: 这是解决PVC冲突的关键配置
+            
+            accessModes: ["ReadWriteOnce"]
+            # 固定写法: 标准的访问模式
+            
+            resources:
+              requests:
+                storage: 5Gi
+                # 🔧 存储容量: Prometheus数据存储大小
 
-  tag: "dev-94ddda1"
-  # 🌟 版本标签: 使用Git提交哈希作为镜像标签
-  # 💡 版本追踪: 确保部署的是特定代码版本构建的镜像
+  # 🌟 Grafana配置  
+  grafana:
+    enabled: true
+    adminPassword: "admin123"
+    # 🔧 管理员密码: 可在环境配置中覆盖
+    
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    # 🌟 资源配置: Grafana的基础资源配置
+    
+    persistence:
+      enabled: true
+      size: 2Gi
+      storageClassName: "local-path"
+      # 🌟 存储配置: 已修复，使用local-path
+      # ⚠️ 关键修复: 之前使用"default"导致冲突
+    
+    service:
+      type: NodePort
+      nodePort: 30080
+      # 🌟 外部访问: 通过NodePort暴露Grafana
 
-  pullPolicy: Always
-  # 🌟 拉取策略: DEV环境总是拉取最新镜像
-  # 💡 开发便利: 确保代码变更立即生效
-
-replicaCount: 1
-# 🌟 开发副本: DEV环境通常只需要1个副本
-# 💡 资源节约: 开发环境优先考虑资源效率
-
-resources:
-  limits:
-    cpu: 200m
-    memory: 128Mi
-    # 🌟 开发资源限制: 适中的资源配置
-
-  requests:
-    cpu: 100m
-    memory: 64Mi
-    # 🌟 开发资源请求: 保守的资源请求
-
-service:
-  type: ClusterIP
-  # 🌟 内部服务: DEV环境使用集群内访问
-  # 💡 调试方式: 通过kubectl port-forward进行调试
-
-  port: 8080
-  # 固定写法: 与应用端口保持一致
-
-env:
-  - name: APP_ENVIRONMENT
-    value: "DEV"
-    # 🌟 环境标识: 设置应用环境变量
-    # 💡 应用感知: 应用代码可通过此变量识别运行环境
+  # 🌟 AlertManager配置
+  alertmanager:
+    alertmanagerSpec:
+      retention: 24h
+      # 🔧 告警保留: 告警数据保留24小时
+      
+      resources:
+        limits:
+          cpu: 100m
+          memory: 128Mi
+        requests:
+          cpu: 50m
+          memory: 64Mi
+      # 🌟 资源配置: AlertManager的资源限制
+      
+      storage:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: "local-path"
+            # 🌟 存储类: 已修复，统一使用local-path
+            
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 2Gi
+                # 🔧 存储容量: AlertManager数据存储
 ```
 
----
+### environments/dev/kube-prometheus-stack-values.yaml (DEV环境配置)
 
-## 🎯 GitOps 工作流程详解
+**📝 DEV环境的监控配置，包含NodePort端口配置**
 
-### 1. 代码变更到部署的完整流程
-
-```mermaid
-graph LR
-    A[开发者提交代码] --> B[CI构建镜像]
-    B --> C[推送镜像到仓库]
-    C --> D[更新GitOps配置]
-    D --> E[ArgoCD检测变更]
-    E --> F[自动同步部署]
-    F --> G[应用运行]
-```
-
-### 2. 环境配置管理策略
-
-**📝 环境配置通过 environments/ 目录分层管理**
-
-```yaml
-# 基础配置层 (charts/microservice1/values.yaml)
-replicaCount: 1      # 默认副本数
-resources: {...}     # 默认资源配置
-
-# 环境配置层 (environments/dev/microservice1-values.yaml)  
-image:
-  tag: "dev-abc123"  # 环境特定镜像
-env:
-  - name: APP_ENVIRONMENT
-    value: "DEV"     # 环境标识
-```
-
-### 3. 多环境部署模式
-
-| 环境 | 命名空间 | 镜像标签 | 副本数 | 资源配置 | 监控 |
-|------|----------|----------|--------|----------|------|
-| **DEV** | microservice1-dev | dev-{hash} | 1 | 低配置 | 基础监控 |
-| **SIT** | microservice1-sit | sit-{hash} | 1 | 中配置 | 完整监控 |
-| **STAGING** | microservice1-staging | staging-{hash} | 2 | 高配置 | 生产级监控 |
-
----
-
-## 📊 监控配置深度解析
-
-### kube-prometheus-stack 配置模式
-
-**📝 监控栈的分层配置设计**
-
-#### 1. 基础监控配置 (charts/kube-prometheus-stack/values.yaml)
-```yaml
-# 基础Prometheus配置
-prometheus:
-  prometheusSpec:
-    retention: 15d          # 默认保留时间
-    storageSpec:
-      volumeClaimTemplate:
-        spec:
-          storageClassName: "local-path"
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 10Gi  # 默认存储大小
-```
-
-#### 2. 环境特定配置 (environments/dev/kube-prometheus-stack-values.yaml)
 ```yaml
 kube-prometheus-stack:
   prometheus:
     service:
       type: NodePort
-      nodePort: 30090       # DEV环境外部访问端口
+      nodePort: 30090
+      # 🌟 外部访问: DEV环境Prometheus端口
+    
     prometheusSpec:
-      retention: 3d         # DEV环境较短保留时间
+      retention: 3d
+      # 🔧 开发环境: 较短的数据保留期
+      
+      retentionSize: "1GB"
+      # 🔧 存储优化: 开发环境使用较小存储
+      
       resources:
         limits:
-          memory: 1Gi       # DEV环境资源配置
-```
+          cpu: 500m
+          memory: 1Gi
+          # 🌟 资源配置: 开发环境适中的资源配置
+        requests:
+          cpu: 200m
+          memory: 512Mi
+      
+      # 🌟 监控发现: 开发环境监控所有命名空间
+      serviceMonitorNamespaceSelector: {}
+      ruleNamespaceSelector: {}
 
-### ServiceMonitor 自动发现机制
+  grafana:
+    adminPassword: "devadmin123"
+    # 🔧 开发密码: DEV环境特定密码
+    
+    service:
+      type: NodePort
+      nodePort: 30080
+      # 🌟 外部访问: DEV环境Grafana端口
+    
+    # 🌟 匿名访问: 开发环境允许匿名查看
+    grafana.ini:
+      auth.anonymous:
+        enabled: true
+        org_role: Viewer
 
-**📝 Prometheus通过ServiceMonitor自动发现监控目标**
-
-```yaml
-# ServiceMonitor 关键配置
-metadata:
-  labels:
-    release: kube-prometheus-stack  # 关键标签
-spec:
-  selector:
-    matchLabels:
-      app: microservice1            # 选择目标Service
-  endpoints:
-  - port: http
-    path: /actuator/prometheus      # Spring Boot指标端点
-```
-
-**🔗 监控链路:**
-1. **ServiceMonitor** 定义监控目标
-2. **Prometheus** 根据标签发现ServiceMonitor
-3. **Service** 提供稳定的访问端点
-4. **Pod** 暴露 `/actuator/prometheus` 指标
-5. **Grafana** 查询Prometheus数据进行可视化
-
----
-
-## 🔐 安全和权限管理
-
-### 1. 镜像拉取认证
-```yaml
-# Deployment中的镜像拉取密钥配置
-imagePullSecrets:
-  - name: ghcr-secret
-```
-
-**配置步骤:**
-```bash
-# 创建Docker镜像仓库认证Secret
-kubectl create secret docker-registry ghcr-secret \
-  --docker-server=ghcr.io \
-  --docker-username=<username> \
-  --docker-password=<token> \
-  --namespace=microservice1-dev
-```
-
-### 2. ArgoCD RBAC
-```yaml
-# ArgoCD Application的项目配置
-spec:
-  project: default  # 可创建专门项目限制权限
-```
-
-### 3. 命名空间隔离
-```yaml
-# 每个服务每个环境独立命名空间
-destination:
-  namespace: microservice1-dev  # 环境隔离
+  alertmanager:
+    service:
+      type: NodePort
+      nodePort: 30093
+      # 🌟 外部访问: DEV环境AlertManager端口
+    
+    alertmanagerSpec:
+      retention: 12h
+      # 🔧 开发环境: 较短的告警保留期
 ```
 
 ---
 
-## 🎯 最佳实践总结
+## 🎯 环境管理策略
 
-### 🌟 GitOps 固定模式
+### 端口分配标准
+| 服务 | DEV环境 | SIT环境 | 说明 |
+|------|---------|---------|------|
+| Grafana | 30080 | 30081 | 监控面板 |
+| Prometheus | 30090 | 30091 | 指标收集 |
+| AlertManager | 30093 | 30094 | 告警管理 |
 
-#### 1. 目录结构模式
-```
-├── argocd/                    # ArgoCD配置
-│   ├── app-of-apps.yaml      # 根应用
-│   └── applications/         # 子应用定义
-├── charts/                   # Helm模板
-│   └── {service}/            # 服务特定Chart
-└── environments/             # 环境配置
-    └── {env}/                # 环境特定values
-```
-
-#### 2. 命名约定模式
+### 配置分层设计
 ```yaml
-# ArgoCD Application命名
-name: {service}-{environment}  # microservice1-dev
-
-# Kubernetes资源命名  
-namespace: {service}-{environment}  # microservice1-dev
-
-# Helm Chart命名
-name: {service}  # microservice1
+# 🌟 三层配置模式
+# 1. Base Layer (charts/*/values.yaml) - 默认配置
+# 2. Environment Layer (environments/*/values.yaml) - 环境覆盖
+# 3. Runtime Layer (ConfigMap/Secret) - 运行时配置
 ```
 
-#### 3. 标签管理模式
-```yaml
-# 标准标签集
-labels:
-  app: {service}                    # 服务标识
-  environment: {env}                # 环境标识
-  release: kube-prometheus-stack    # 监控发现
-```
-
-### 🔧 环境配置策略
-
-#### 1. 配置分层
-- **Base Values**: Chart默认配置
-- **Environment Values**: 环境特定覆盖
-- **Runtime Config**: 环境变量和ConfigMap
-
-#### 2. 镜像管理
-```yaml
-# 开发环境
-image:
-  tag: "dev-{git-hash}"     # 开发分支构建
-
-# 生产环境  
-image:
-  tag: "v1.2.3"            # 语义化版本标签
-```
-
-#### 3. 资源配置
-```yaml
-# 开发环境 - 资源节约
-resources:
-  requests: { cpu: 100m, memory: 64Mi }
-  limits: { cpu: 200m, memory: 128Mi }
-
-# 生产环境 - 性能保证
-resources:
-  requests: { cpu: 500m, memory: 512Mi }
-  limits: { cpu: 1000m, memory: 1Gi }
-```
-
-### ⚠️ 运维注意事项
-
-#### 1. 版本管理
-- 使用具体版本标签，避免latest
-- Git提交哈希用于开发环境
-- 语义化版本用于生产环境
-
-#### 2. 监控配置
-- ServiceMonitor标签必须正确
-- 监控端点路径与应用配置一致
-- 抓取间隔平衡精度和性能
-
-#### 3. 安全考虑
-- 镜像拉取密钥正确配置
-- 资源限制防止资源耗尽
-- 命名空间隔离环境资源
+### 存储类统一配置 ⚠️
+所有环境统一使用 `storageClassName: "local-path"`:
+- **charts/kube-prometheus-stack/values.yaml**: 基础配置已修复
+- **environments/staging/kube-prometheus-stack-values.yaml**: staging环境已修复
+- **environments/dev/kube-prometheus-stack-values.yaml**: DEV环境正确配置
+- **environments/sit/kube-prometheus-stack-values.yaml**: SIT环境正确配置
 
 ---
 
 ## 🚀 部署验证流程
 
-### 1. ArgoCD应用状态检查
+### 1. 检查存储类
 ```bash
-# 检查App-of-Apps状态
-argocd app get project-app-of-apps
-
-# 检查子应用状态
-argocd app list
-argocd app get microservice1-dev
+kubectl get storageclass
+# 确保存在 local-path (default)
 ```
 
-### 2. Kubernetes资源验证
+### 2. 部署App-of-Apps
 ```bash
+kubectl apply -f argocd/app-of-apps.yaml
+```
+
+### 3. 验证应用状态
+```bash
+# 检查ArgoCD应用
+kubectl get applications -n argocd
+
 # 检查Pod状态
 kubectl get pods -n microservice1-dev
-
-# 检查Service配置
-kubectl get svc -n microservice1-dev
-
-# 检查ServiceMonitor
-kubectl get servicemonitor -n microservice1-dev
+kubectl get pods -n microservice2-dev  
+kubectl get pods -n monitoring
 ```
 
-### 3. 应用功能测试
+### 4. 访问监控服务
 ```bash
-# 健康检查
-kubectl port-forward -n microservice1-dev svc/microservice1 8080:8080
-curl http://localhost:8080/health
+# 获取公网IP
+export PUBLIC_IP=$(curl -s ifconfig.me)
 
-# 监控指标检查
-curl http://localhost:8080/actuator/prometheus
-```
-
-### 4. 监控数据验证
-```bash
-# Prometheus目标检查
-kubectl port-forward -n monitoring svc/kube-prometheus-stack-prometheus 9090:9090
-# 访问 http://localhost:9090/targets
-
-# Grafana面板检查  
-kubectl port-forward -n monitoring svc/kube-prometheus-stack-grafana 3000:80
-# 访问 http://localhost:3000
+# 访问地址
+echo "Grafana: http://$PUBLIC_IP:30080 (admin/devadmin123)"
+echo "Prometheus: http://$PUBLIC_IP:30090"
+echo "AlertManager: http://$PUBLIC_IP:30093"
 ```
 
 ---
 
 ## 🎯 学习要点总结
 
-### 🌟 GitOps核心概念
-1. **声明式配置**: 所有部署配置都在Git中声明
-2. **自动同步**: ArgoCD自动检测变更并部署
-3. **配置分离**: 模板与环境配置分离管理
-4. **版本控制**: 所有变更都有Git历史记录
+### 🌟 GitOps核心模式
+1. **App-of-Apps**: 一个根应用管理所有子应用
+2. **声明式配置**: 所有配置都在Git中声明
+3. **自动同步**: ArgoCD检测变更并自动部署
+4. **环境隔离**: 通过命名空间和配置分层实现
 
 ### 🔧 Helm模板化
-1. **模板复用**: 一套Chart模板支持多环境
-2. **参数化配置**: 通过Values实现配置灵活性
-3. **条件渲染**: 根据配置动态生成资源
-4. **命名空间管理**: 自动创建和管理命名空间
+1. **模板复用**: 一套Chart支持多环境部署
+2. **配置分离**: 模板与环境配置分离管理
+3. **动态渲染**: 根据Values动态生成Kubernetes资源
+4. **条件控制**: 通过if/range实现灵活的模板逻辑
 
 ### 📊 监控集成
-1. **自动发现**: ServiceMonitor自动发现监控目标
-2. **指标标准化**: 统一的Prometheus指标格式
-3. **多环境监控**: 支持不同环境的监控配置
-4. **可视化展示**: Grafana提供统一的监控面板
+1. **ServiceMonitor**: 自动发现微服务监控端点
+2. **标签选择**: 通过release标签被Prometheus发现
+3. **多环境支持**: 不同环境使用不同端口和配置
+4. **存储统一**: 所有组件使用local-path存储类
 
-### ⚠️ 生产考虑
-1. **安全性**: 镜像仓库认证、RBAC权限控制
-2. **可靠性**: 资源限制、健康检查、副本配置
-3. **可观测性**: 全面的监控和日志收集
-4. **可维护性**: 清晰的目录结构和命名约定
+### ⚠️ 配置关键点
+1. **StorageClass统一**: 必须使用"local-path"避免PVC冲突
+2. **标签一致性**: ServiceMonitor的release标签必须正确
+3. **端口规划**: 不同环境使用不同NodePort避免冲突
+4. **镜像认证**: 所有命名空间需要ghcr-secret
