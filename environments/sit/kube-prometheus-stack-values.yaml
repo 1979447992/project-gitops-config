@@ -15,7 +15,7 @@ kube-prometheus-stack:
       storageSpec:
         volumeClaimTemplate:
           spec:
-            storageClassName: "default"
+            storageClassName: "local-path"
             accessModes: ["ReadWriteOnce"]
             resources:
               requests:
@@ -82,7 +82,7 @@ kube-prometheus-stack:
       storage:
         volumeClaimTemplate:
           spec:
-            storageClassName: "default"
+            storageClassName: "local-path"
             accessModes: ["ReadWriteOnce"]
             resources:
               requests:
