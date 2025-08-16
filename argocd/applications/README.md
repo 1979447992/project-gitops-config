@@ -51,6 +51,8 @@ git push
 | Prometheus 保留时间 | 3天 | 5天 |
 | Prometheus 存储大小 | 3Gi | 5Gi |
 | Grafana NodePort | 30080 | 30081 |
+| **Prometheus NodePort** | **30090** | **30091** |
+| **AlertManager NodePort** | **30093** | **30094** |
 | 内存限制 | 1Gi | 768Mi |
 | CPU限制 | 500m | 400m |
 

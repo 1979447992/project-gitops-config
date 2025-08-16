@@ -2,6 +2,9 @@
 kube-prometheus-stack:
   # Prometheus configuration for SIT
   prometheus:
+    service:
+      type: NodePort
+      nodePort: 30091  # Different port for SIT
     prometheusSpec:
       retention: 5d
       retentionSize: "2GB"
@@ -70,6 +73,9 @@ kube-prometheus-stack:
   
   # AlertManager configuration for SIT
   alertmanager:
+    service:
+      type: NodePort
+      nodePort: 30094  # Different port for SIT
     alertmanagerSpec:
       retention: 24h
       resources:

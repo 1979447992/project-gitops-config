@@ -2,6 +2,9 @@
 kube-prometheus-stack:
   # Prometheus configuration for DEV
   prometheus:
+    service:
+      type: NodePort
+      nodePort: 30090
     prometheusSpec:
       retention: 3d
       retentionSize: "1GB"
@@ -50,6 +53,9 @@ kube-prometheus-stack:
   
   # Smaller resource requests for dev
   alertmanager:
+    service:
+      type: NodePort
+      nodePort: 30093
     alertmanagerSpec:
       retention: 12h
       resources:
