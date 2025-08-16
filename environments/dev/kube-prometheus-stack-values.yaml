@@ -1,0 +1,48 @@
+# Environment-specific values for kube-prometheus-stack in DEV
+kube-prometheus-stack:
+  # Prometheus configuration for DEV
+  prometheus:
+    prometheusSpec:
+      retention: 7d
+      retentionSize: "5GB"
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: "default"
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 10Gi
+      
+      # Allow scraping from all namespaces in dev
+      serviceMonitorNamespaceSelector: {}
+      ruleNamespaceSelector: {}
+  
+  # Grafana configuration for DEV
+  grafana:
+    adminPassword: "devadmin123"
+    persistence:
+      size: 5Gi
+    
+    service:
+      type: NodePort
+      nodePort: 30080
+    
+    # Enable anonymous access for dev environment
+    grafana.ini:
+      auth.anonymous:
+        enabled: true
+        org_role: Viewer
+  
+  # Smaller resource requests for dev
+  alertmanager:
+    alertmanagerSpec:
+      retention: 24h
+      storage:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: "default"
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 2Gi

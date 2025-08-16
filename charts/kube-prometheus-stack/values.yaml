@@ -1,0 +1,78 @@
+# Default values for kube-prometheus-stack
+# This is a YAML-formatted file.
+
+kube-prometheus-stack:
+  # Prometheus configuration
+  prometheus:
+    prometheusSpec:
+      retention: 15d
+      retentionSize: "10GB"
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: "default"
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 20Gi
+      
+      # Service discovery for microservices
+      serviceMonitorSelectorNilUsesHelmValues: false
+      serviceMonitorSelector: {}
+      ruleSelectorNilUsesHelmValues: false
+      ruleSelector: {}
+  
+  # Grafana configuration
+  grafana:
+    enabled: true
+    adminPassword: "admin123"
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClassName: "default"
+    
+    service:
+      type: NodePort
+      nodePort: 30080
+    
+    # Import dashboards for Spring Boot
+    dashboardProviders:
+      dashboardproviders.yaml:
+        apiVersion: 1
+        providers:
+        - name: 'spring-boot'
+          orgId: 1
+          folder: 'Spring Boot'
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/spring-boot
+    
+    dashboards:
+      spring-boot:
+        spring-boot-dashboard:
+          gnetId: 12900
+          revision: 1
+          datasource: Prometheus
+  
+  # AlertManager configuration
+  alertmanager:
+    alertmanagerSpec:
+      retention: 72h
+      storage:
+        volumeClaimTemplate:
+          spec:
+            storageClassName: "default"
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 5Gi
+  
+  # Node exporter (for node metrics)
+  nodeExporter:
+    enabled: true
+  
+  # Kube state metrics
+  kubeStateMetrics:
+    enabled: true
