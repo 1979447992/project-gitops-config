@@ -1,6 +1,6 @@
 image:
-  repository: ghcr.io/1979447992/microservice2
-  tag: "sit-12ca0ff"
+  repository: ghcr.io/1979447992/microservice1
+  tag: "dev-latest"
   pullPolicy: Always
 replicaCount: 1
 resources:
@@ -15,8 +15,8 @@ service:
   port: 8080
 env:
   - name: APP_ENVIRONMENT
-    value: "SIT"
+    value: "DEV"
 
-# Monitoring configuration for SIT
-namespace: microservice2-sit
-environment: sit
+# Monitoring configuration for DEV
+namespace: microservice1-dev
+environment: dev

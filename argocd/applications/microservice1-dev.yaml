@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: microservice1-dev
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/1979447992/project-gitops-config.git
+    targetRevision: dev
+    path: charts/microservice1
+    helm:
+      valueFiles:
+        - ../../environments/dev/microservice1-values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: microservice1-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

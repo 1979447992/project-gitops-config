@@ -1,5 +1,5 @@
 image:
-  repository: ghcr.io/1979447992/microservice1/microservice1
+  repository: ghcr.io/1979447992/microservice1
   tag: "sit-a668805"
   pullPolicy: Always
 replicaCount: 1
