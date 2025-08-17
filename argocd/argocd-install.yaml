@@ -1,36 +1,36 @@
 # ============================================================
-# SIT 环境独立 ArgoCD 部署配置
+# SIT 环境 ArgoCD 部署配置
 # ============================================================
 # 
 # 📝 学习说明:
-# 这个配置创建了一个完全独立的 ArgoCD 实例用于 SIT 环境
-# 与 DEV 环境的 ArgoCD 完全隔离，符合企业级最佳实践
+# 这个配置用于部署 SIT 环境的 ArgoCD 实例
+# 使用标准 argocd 命名空间，但通过分支隔离确保环境独立
 #
 # 🔧 部署特点:
-# - 独立的 argocd-sit 命名空间
+# - 标准的 argocd 命名空间
 # - 不同的 NodePort 端口 (30089)
 # - SIT 专属的管理员密码
 # - 仅管理 SIT 环境的应用
 #
-# 🌟 企业级架构优势:
-# - 环境完全隔离，避免误操作
-# - 独立的权限管理和访问控制
-# - 分离的配置和故障域
+# 🌟 分支隔离优势:
+# - 每个分支包含完整的环境配置
+# - 通过Git分支实现环境隔离
+# - 标准化的命名空间管理
 # ============================================================
 
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: argocd-sit
+  name: argocd
   labels:
     environment: sit
-    app.kubernetes.io/name: argocd-sit
+    app.kubernetes.io/name: argocd
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: ArgoCD
 metadata:
-  name: argocd-sit
-  namespace: argocd-sit
+  name: argocd
+  namespace: argocd
 spec:
   # Server configuration for SIT environment
   server:
@@ -104,11 +104,11 @@ spec:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: argocd-sit-initial-admin-secret
-  namespace: argocd-sit
+  name: argocd-initial-admin-secret
+  namespace: argocd
   labels:
-    app.kubernetes.io/name: argocd-sit-secret
-    app.kubernetes.io/part-of: argocd-sit
+    app.kubernetes.io/name: argocd-secret
+    app.kubernetes.io/part-of: argocd
 type: Opaque
 data:
   password: c2l0YWRtaW4xMjM=  # sitadmin123 in base64

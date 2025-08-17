@@ -1,13 +1,32 @@
+# ============================================================
+# SIT 环境 App of Apps 配置
+# ============================================================
+# 
+# 📝 学习说明:
+# 这是 SIT 环境的 App of Apps 模式配置
+# 管理 SIT 环境的所有应用，通过分支实现环境隔离
+#
+# 🔧 配置特点:
+# - 仅从 sit 分支拉取配置
+# - 部署到标准 argocd 命名空间
+# - 管理 SIT 相关的应用定义
+#
+# 🌟 分支隔离优势:
+# - 每个分支自包含完整配置
+# - Git分支实现天然的环境隔离
+# - 标准化的目录结构
+# ============================================================
+
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: project-app-of-apps
+  name: app-of-apps
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: https://github.com/1979447992/project-gitops-config.git
-    targetRevision: dev
+    targetRevision: sit  # Only SIT branch
     path: argocd/applications
   destination:
     server: https://kubernetes.default.svc
