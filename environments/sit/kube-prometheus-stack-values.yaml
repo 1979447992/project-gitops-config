@@ -24,17 +24,9 @@ kube-prometheus-stack:
               requests:
                 storage: 5Gi
       
-      # Monitoring specific namespaces in SIT
-      serviceMonitorNamespaceSelector:
-        matchNames:
-        - microservice1-sit
-        - microservice2-sit
-        - monitoring-sit
-      ruleNamespaceSelector:
-        matchNames:
-        - microservice1-sit
-        - microservice2-sit
-        - monitoring-sit
+      # Monitor all namespaces in SIT (using empty selector like DEV)
+      serviceMonitorNamespaceSelector: {}
+      ruleNamespaceSelector: {}
   
   # Grafana configuration for SIT
   grafana:
@@ -128,15 +120,9 @@ kube-prometheus-stack:
         cpu: 50m
         memory: 64Mi
   
-  # Node exporter resource limits
+  # Node exporter disabled to avoid port conflicts on single-node cluster
   nodeExporter:
-    resources:
-      limits:
-        cpu: 75m
-        memory: 48Mi
-      requests:
-        cpu: 35m
-        memory: 24Mi
+    enabled: false
   
   # Kube state metrics resource limits
   kubeStateMetrics:
