@@ -1,8 +1,12 @@
+# ============================================================
+# SIT 环境 Microservice2 应用配置
+# ============================================================
+
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: microservice2-sit
-  namespace: argocd
+  namespace: argocd-sit
 spec:
   project: default
   source:
@@ -21,3 +25,4 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
