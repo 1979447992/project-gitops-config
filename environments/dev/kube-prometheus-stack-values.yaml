@@ -43,7 +43,7 @@ kube-prometheus-stack:
     
     service:
       type: NodePort
-      nodePort: 30080
+      nodePort: 30081
     
     # Enable anonymous access for dev environment
     grafana.ini:

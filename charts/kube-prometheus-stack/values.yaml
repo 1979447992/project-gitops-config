@@ -47,7 +47,7 @@ kube-prometheus-stack:
     
     service:
       type: NodePort
-      nodePort: 30080
+      nodePort: 30082
     
     # Import dashboards for Spring Boot
     dashboardProviders:
