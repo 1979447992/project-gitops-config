@@ -47,7 +47,7 @@ kube-prometheus-stack:
     
     service:
       type: NodePort
-      nodePort: 30080
+      nodePort: 30082
     
     # Import dashboards for Spring Boot
     dashboardProviders:
@@ -111,3 +111,19 @@ kube-prometheus-stack:
       requests:
         cpu: 50m
         memory: 64Mi
+  
+  # K3s specific configurations
+  prometheusOperator:
+    # Disable etcd and controller-manager metrics (not exposed in K3s by default)
+    kubeletService:
+      enabled: true
+    
+  # Disable components not available in K3s
+  kubeEtcd:
+    enabled: false
+  kubeControllerManager:
+    enabled: false
+  kubeScheduler:
+    enabled: false
+  kubeProxy:
+    enabled: false
