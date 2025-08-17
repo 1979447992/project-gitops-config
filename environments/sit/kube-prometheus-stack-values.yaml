@@ -51,7 +51,7 @@ kube-prometheus-stack:
     
     service:
       type: NodePort
-      nodePort: 30081
+      nodePort: 30085
     
     # Limited anonymous access for SIT
     grafana.ini:
