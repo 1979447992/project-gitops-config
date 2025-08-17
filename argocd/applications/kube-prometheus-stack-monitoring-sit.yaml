@@ -33,7 +33,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/1979447992/project-gitops-config.git
-    targetRevision: main
+    targetRevision: sit
     path: charts/kube-prometheus-stack
     helm:
       valueFiles:
