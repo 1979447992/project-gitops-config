@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/1979447992/project-gitops-config.git
-    targetRevision: main
+    targetRevision: develop
     path: charts/microservice1
     helm:
       valueFiles:
