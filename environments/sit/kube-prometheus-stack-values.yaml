@@ -4,17 +4,17 @@ kube-prometheus-stack:
   prometheus:
     service:
       type: NodePort
-      nodePort: 30091  # Different port for SIT
+      nodePort: 30091
     prometheusSpec:
       retention: 5d
       retentionSize: "2GB"
       resources:
         limits:
-          cpu: 400m
-          memory: 768Mi
+          cpu: 800m
+          memory: 1.5Gi
         requests:
-          cpu: 150m
-          memory: 384Mi
+          cpu: 300m
+          memory: 768Mi
       storageSpec:
         volumeClaimTemplate:
           spec:
@@ -24,7 +24,7 @@ kube-prometheus-stack:
               requests:
                 storage: 5Gi
       
-      # Monitor all namespaces in SIT (using empty selector like DEV)
+      # Allow scraping from all namespaces in sit
       serviceMonitorNamespaceSelector: {}
       ruleNamespaceSelector: {}
   
@@ -36,7 +36,7 @@ kube-prometheus-stack:
         cpu: 200m
         memory: 300Mi
       requests:
-        cpu: 75m
+        cpu: 100m
         memory: 150Mi
     persistence:
       size: 2Gi
@@ -45,38 +45,25 @@ kube-prometheus-stack:
       type: NodePort
       nodePort: 30085
     
-    # Limited anonymous access for SIT
+    # Disable anonymous access for sit environment
     grafana.ini:
       auth.anonymous:
-        enabled: true
-        org_role: Viewer
-        org_name: "SIT Environment"
-    
-    # SIT-specific datasource settings
-    datasources:
-      datasources.yaml:
-        apiVersion: 1
-        datasources:
-        - name: Prometheus-SIT
-          type: prometheus
-          url: http://kube-prometheus-stack-prometheus:9090
-          access: proxy
-          isDefault: false
+        enabled: false
   
-  # AlertManager configuration for SIT
+  # AlertManager for SIT
   alertmanager:
     service:
       type: NodePort
-      nodePort: 30094  # Different port for SIT
+      nodePort: 30094
     alertmanagerSpec:
       retention: 24h
       resources:
         limits:
-          cpu: 75m
-          memory: 96Mi
+          cpu: 100m
+          memory: 128Mi
         requests:
-          cpu: 35m
-          memory: 48Mi
+          cpu: 50m
+          memory: 64Mi
       storage:
         volumeClaimTemplate:
           spec:
@@ -85,33 +72,19 @@ kube-prometheus-stack:
             resources:
               requests:
                 storage: 2Gi
-      
-      # SIT-specific alert routing
-      config:
-        global:
-          smtp_smarthost: 'localhost:587'
-        route:
-          group_by: ['alertname', 'environment']
-          group_wait: 30s
-          group_interval: 30s
-          repeat_interval: 2h
-          receiver: 'sit-webhook'
-          routes:
-          - match:
-              severity: critical
-            receiver: 'sit-critical'
-        receivers:
-        - name: 'sit-webhook'
-          webhook_configs:
-          - url: 'http://127.0.0.1:5002/'
-            title: 'SIT Alert'
-        - name: 'sit-critical'
-          webhook_configs:
-          - url: 'http://127.0.0.1:5002/critical'
-            title: 'SIT Critical Alert'
   
-  # Resource limits for SIT environment
-  prometheusOperator:
+  # Resource limits for node exporter
+  nodeExporter:
+    resources:
+      limits:
+        cpu: 100m
+        memory: 64Mi
+      requests:
+        cpu: 50m
+        memory: 32Mi
+  
+  # Resource limits for kube state metrics
+  kubeStateMetrics:
     resources:
       limits:
         cpu: 100m
@@ -119,17 +92,3 @@ kube-prometheus-stack:
       requests:
         cpu: 50m
         memory: 64Mi
-  
-  # Node exporter disabled to avoid port conflicts on single-node cluster
-  nodeExporter:
-    enabled: false
-  
-  # Kube state metrics resource limits
-  kubeStateMetrics:
-    resources:
-      limits:
-        cpu: 75m
-        memory: 96Mi
-      requests:
-        cpu: 35m
-        memory: 48Mi
