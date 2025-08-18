@@ -16,3 +16,7 @@ service:
 env:
   - name: APP_ENVIRONMENT
     value: "SIT"
+
+# SIT environment configuration
+namespace: microservice1-sit
+environment: sit
