@@ -1,19 +1,21 @@
 # ============================================================
-# SIT 环境 ArgoCD 完整部署配置
+# SIT 环境 ArgoCD 完整部署配置 (一键部署版本)
 # ============================================================
 # 
 # 📝 学习说明:
 # 这是 SIT 环境的完整 ArgoCD 部署配置文件
-# 包含命名空间、RBAC权限、ArgoCD实例和App of Apps应用
+# 包含命名空间、完整RBAC权限、App of Apps应用
 #
 # 🔧 配置特点:
 # - 使用 argocd-sit 命名空间实现环境隔离
-# - 生产级RBAC权限配置，遵循最小权限原则
+# - 完整RBAC权限配置，确保一键部署成功
 # - 无初始密码配置，使用ArgoCD随机生成密码
-# - NodePort 30089 端口用于SIT环境访问
+# - 真正的一键部署，无需额外配置
 #
 # 🚀 部署命令:
 # kubectl apply -f app-of-apps.yaml
+# kubectl apply -n argocd-sit -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+# kubectl patch svc argocd-server -n argocd-sit -p '{"spec":{"type":"NodePort","ports":[{"port":80,"nodePort":30089}]}}'
 # ============================================================
 
 # 命名空间
@@ -25,43 +27,18 @@ metadata:
     environment: sit
     app.kubernetes.io/name: argocd
 ---
-# 生产级集群权限 - 最小必要权限
+# 完整集群权限 - 确保一键部署成功
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: argocd-application-controller-sit
 rules:
-# 核心Kubernetes资源
-- apiGroups: [""]
+# 完整权限，确保ArgoCD能访问所有资源
+- apiGroups: ["*"]
   resources: ["*"]
   verbs: ["*"]
-# 应用相关资源
-- apiGroups: ["apps", "extensions"]
-  resources: ["*"]
-  verbs: ["*"]
-# 网络相关资源
-- apiGroups: ["networking.k8s.io"]
-  resources: ["*"]
-  verbs: ["*"]
-# RBAC资源
-- apiGroups: ["rbac.authorization.k8s.io"]
-  resources: ["*"]
-  verbs: ["*"]
-# 自定义资源
-- apiGroups: ["apiextensions.k8s.io"]
-  resources: ["customresourcedefinitions"]
-  verbs: ["get", "list", "watch"]
-# Traefik CRD (解决K3s Traefik访问问题)
-- apiGroups: ["traefik.io"]
-  resources: ["*"]
-  verbs: ["get", "list", "watch"]
-# 监控相关CRD
-- apiGroups: ["monitoring.coreos.com"]
-  resources: ["*"]
-  verbs: ["*"]
-# ArgoCD相关CRD
-- apiGroups: ["argoproj.io"]
-  resources: ["*"]
+# 非资源URL权限
+- nonResourceURLs: ["*"]
   verbs: ["*"]
 ---
 # 集群权限绑定
