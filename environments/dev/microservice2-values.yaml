@@ -1,15 +1,15 @@
 image:
   repository: ghcr.io/1979447992/microservice2/microservice2
-  tag: "dev-ebd196c"
+  tag: "dev-c3bc2d5"
   pullPolicy: Always
 replicaCount: 1
 resources:
   limits:
     cpu: 200m
-    memory: 256Mi
+    memory: 128Mi
   requests:
     cpu: 100m
-    memory: 128Mi
+    memory: 64Mi
 service:
   type: ClusterIP
   port: 8080
