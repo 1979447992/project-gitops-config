@@ -1,6 +1,6 @@
 # Environment-specific values for microservice2 in DEV
 image:
-  repository: ghcr.io/1979447992/microservice2/microservice2
+  repository: ghcr.io/1979447992/microservice2
   tag: "dev-d1b079f"
   pullPolicy: Always
 
