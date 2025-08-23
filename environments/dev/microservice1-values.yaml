@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/1979447992/microservice1/microservice1
-  tag: "dev-c641b20"
+  tag: "dev-2ad8930"
   pullPolicy: Always
 replicaCount: 1
 resources:
