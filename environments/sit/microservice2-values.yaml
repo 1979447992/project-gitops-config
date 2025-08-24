@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/1979447992/microservice2/microservice2
-  tag: "sit-12ca0ff"
+  tag: "sit-b039002"
   pullPolicy: Always
 replicaCount: 1
 resources:
@@ -16,7 +16,6 @@ service:
 env:
   - name: APP_ENVIRONMENT
     value: "SIT"
-
 # SIT environment configuration
 namespace: microservice2-sit
 environment: sit
